@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carta de Agradecimento</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a href="index.html" class="topbar-brand">
+        <span class="brand-dot"></span>
+        <span id="topbar-nick" class="topbar-nick"></span>
+      </a>
+      <a href="index.html" class="btn-voltar">← Voltar ao portfólio</a>
+    </div>
+  </header>
+
+  <main class="container main-content carta-main">
+    <article id="carta-conteudo" class="carta-box"></article>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <p id="footer-texto">Lucas Vasconcelos Alves • 3º B DS</p>
+    </div>
+  </footer>
+
+  <script src="dados.js"></script>
+  <script>
+    function normalizarSenha(str) {
+      return (str || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, "")
+        .trim();
+    }
+
+    function esc(str) {
+      const d = document.createElement("div");
+      d.textContent = str || "";
+      return d.innerHTML;
+    }
+
+    function mostrarCarta(box, carta) {
+      document.title = `${carta.titulo} • ${PERFIL.nome}`;
+
+      box.innerHTML = `
+        <div class="carta-topo">
+          <div class="week-badges">
+            <span class="badge-materia">${esc(carta.materia)}</span>
+            <span class="badge-semana">Agradecimento</span>
+          </div>
+          <p class="carta-destinatario">Para: <strong>${esc(carta.professor)}</strong></p>
+          <h1 class="carta-titulo">${esc(carta.titulo)}</h1>
+        </div>
+
+        <div class="carta-texto">${esc(carta.texto)}</div>
+
+        <div class="carta-rodape">
+          <div class="carta-autor">
+            <img
+              src="${encodeURI(PERFIL.foto || "")}"
+              alt="${esc(PERFIL.nome)}"
+            >
+            <div>
+              <strong>${esc(carta.assinatura || PERFIL.nome)}</strong>
+              <span>${esc(PERFIL.nickname)}</span>
+            </div>
+          </div>
+          <a href="index.html" class="btn btn-brown">← Voltar ao portfólio</a>
+        </div>
+      `;
+    }
+
+    function mostrarBloqueio(box, id, carta) {
+      if (!carta) {
+        box.innerHTML = `
+          <div class="carta-erro">
+            <h2>Carta não encontrada</h2>
+            <p>Acesse o registro extra de Back-end ou Front-end no portfólio e informe a senha.</p>
+            <a href="index.html" class="btn btn-military">Voltar para o início</a>
+          </div>
+        `;
+        return;
+      }
+
+      box.innerHTML = `
+        <div class="carta-erro">
+          <div class="week-badges">
+            <span class="badge-materia">${esc(carta.materia)}</span>
+            <span class="badge-semana">Acesso protegido</span>
+          </div>
+          <h2>Digite a senha para ler a carta</h2>
+          <p>Este registro extra é protegido por senha.</p>
+          <form id="carta-senha-form" class="modal-form carta-senha-form">
+            <input type="text" id="carta-senha-input" class="modal-input" placeholder="Digite a senha..." autocomplete="off" required>
+            <p id="carta-senha-erro" class="modal-erro" hidden>Senha incorreta. Tente novamente.</p>
+            <div class="modal-actions">
+              <a href="index.html" class="btn btn-outline">Voltar</a>
+              <button type="submit" class="btn btn-brown">Abrir carta →</button>
+            </div>
+          </form>
+        </div>
+      `;
+
+      const form = document.getElementById("carta-senha-form");
+      const input = document.getElementById("carta-senha-input");
+      const erro = document.getElementById("carta-senha-erro");
+
+      input.addEventListener("input", () => { erro.hidden = true; });
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        if (normalizarSenha(input.value) === normalizarSenha(carta.senha)) {
+          mostrarCarta(box, carta);
+        } else {
+          erro.hidden = false;
+          input.select();
+        }
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("topbar-nick").textContent = PERFIL.nickname;
+
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("m") || "";
+      const senhaUrl = normalizarSenha(params.get("s") || "");
+      const box = document.getElementById("carta-conteudo");
+
+      const carta = typeof CARTAS !== "undefined" ? CARTAS[id] : null;
+      const valida = carta && senhaUrl && normalizarSenha(carta.senha) === senhaUrl;
+
+      if (valida) {
+        mostrarCarta(box, carta);
+      } else {
+        mostrarBloqueio(box, id, carta);
+      }
+    });
+  </script>
+</body>
+</html>
