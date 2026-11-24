@@ -2,7 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#111812">
   <title>Carta de Agradecimento</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,7 +17,7 @@
         <span class="brand-dot"></span>
         <span id="topbar-nick" class="topbar-nick"></span>
       </a>
-      <a href="index.html" class="btn-voltar">← Voltar ao portfólio</a>
+      <a href="index.html" class="btn-voltar">← Voltar<span class="btn-voltar-texto-completo">&nbsp;ao portfólio</span></a>
     </div>
   </header>
 
@@ -99,8 +100,19 @@
           <h2>Digite a senha para ler a carta</h2>
           <p>Este registro extra é protegido por senha.</p>
           <form id="carta-senha-form" class="modal-form carta-senha-form">
-            <input type="text" id="carta-senha-input" class="modal-input" placeholder="Digite a senha..." autocomplete="off" required>
-            <p id="carta-senha-erro" class="modal-erro" hidden>Senha incorreta. Tente novamente.</p>
+            <input
+              type="text"
+              id="carta-senha-input"
+              class="modal-input"
+              placeholder="Digite a senha..."
+              autocomplete="off"
+              autocapitalize="none"
+              autocorrect="off"
+              spellcheck="false"
+              enterkeyhint="go"
+              required
+            >
+            <p id="carta-senha-erro" class="modal-erro" role="alert" aria-live="polite" hidden>Senha incorreta. Tente novamente.</p>
             <div class="modal-actions">
               <a href="index.html" class="btn btn-outline">Voltar</a>
               <button type="submit" class="btn btn-brown">Abrir carta →</button>

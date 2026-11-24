@@ -1,6 +1,7 @@
 let materiaAtual = "todas";
 let buscaAtual = "";
 let cartaPendenteId = null;
+let ultimoFocoModal = null;
 
 const ICONES = {
   todas: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>`,
@@ -12,10 +13,10 @@ const ICONES = {
   tcc: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/></svg>`
 };
 
-const ICONE_PASTA = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>`;
-const ICONE_ARQUIVO = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
-const ICONE_LINK = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`;
-const ICONE_CADEADO = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
+const ICONE_PASTA = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>`;
+const ICONE_ARQUIVO = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+const ICONE_LINK = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`;
+const ICONE_CADEADO = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
 
 function esc(texto) {
   const div = document.createElement("div");
@@ -72,6 +73,29 @@ function montarPerfil() {
   document.getElementById("stat-anexos").textContent = totalAnexos;
 }
 
+function atualizarFadeDestaques() {
+  const secao = document.getElementById("highlights-section");
+  const lista = document.getElementById("highlights-list");
+  if (!secao || !lista) return;
+
+  const temEsquerda = lista.scrollLeft > 8;
+  const temDireita = lista.scrollLeft + lista.clientWidth < lista.scrollWidth - 8;
+
+  secao.classList.toggle("tem-scroll-esquerda", temEsquerda);
+  secao.classList.toggle("tem-scroll-direita", temDireita);
+}
+
+function atualizarEstadoDestaques() {
+  const lista = document.getElementById("highlights-list");
+  if (!lista) return;
+
+  lista.querySelectorAll(".highlight-btn").forEach((btn) => {
+    const ativo = btn.dataset.materia === materiaAtual;
+    btn.classList.toggle("ativo", ativo);
+    btn.setAttribute("aria-pressed", ativo ? "true" : "false");
+  });
+}
+
 function renderizarDestaques() {
   const lista = document.getElementById("highlights-list");
   const itens = [
@@ -81,10 +105,15 @@ function renderizarDestaques() {
 
   lista.innerHTML = itens
     .map((item) => {
-      const ativo = item.id === materiaAtual ? "ativo" : "";
+      const ativo = item.id === materiaAtual;
       const icone = ICONES[item.id] || ICONES.todas;
       return `
-        <button type="button" class="highlight-btn ${ativo}" data-materia="${esc(item.id)}">
+        <button
+          type="button"
+          class="highlight-btn ${ativo ? "ativo" : ""}"
+          data-materia="${esc(item.id)}"
+          aria-pressed="${ativo ? "true" : "false"}"
+        >
           <span class="highlight-circle">
             <span class="highlight-inner">${icone}</span>
           </span>
@@ -97,17 +126,23 @@ function renderizarDestaques() {
   lista.querySelectorAll(".highlight-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       materiaAtual = btn.dataset.materia;
-      renderizarDestaques();
+      atualizarEstadoDestaques();
       renderizarFeed();
+      btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
     });
   });
+
+  lista.addEventListener("scroll", atualizarFadeDestaques, { passive: true });
+  window.addEventListener("resize", atualizarFadeDestaques, { passive: true });
+  requestAnimationFrame(atualizarFadeDestaques);
 }
 
-function abrirModalSenha(cartaId) {
+function abrirModalSenha(cartaId, origemEl) {
   const carta = typeof CARTAS !== "undefined" ? CARTAS[cartaId] : null;
   if (!carta) return;
 
   cartaPendenteId = cartaId;
+  ultimoFocoModal = origemEl || document.activeElement;
 
   const modal = document.getElementById("modal-senha");
   const input = document.getElementById("modal-input");
@@ -118,14 +153,31 @@ function abrirModalSenha(cartaId) {
   input.value = "";
   erro.hidden = true;
   modal.hidden = false;
+  document.body.classList.add("modal-aberto");
 
-  setTimeout(() => input.focus(), 20);
+  setTimeout(() => {
+    try {
+      input.focus({ preventScroll: true });
+    } catch {
+      input.focus();
+    }
+  }, 30);
 }
 
 function fecharModalSenha() {
   const modal = document.getElementById("modal-senha");
   modal.hidden = true;
+  document.body.classList.remove("modal-aberto");
   cartaPendenteId = null;
+
+  if (ultimoFocoModal && typeof ultimoFocoModal.focus === "function") {
+    try {
+      ultimoFocoModal.focus({ preventScroll: true });
+    } catch {
+      ultimoFocoModal.focus();
+    }
+  }
+  ultimoFocoModal = null;
 }
 
 function configurarModalSenha() {
@@ -147,6 +199,7 @@ function configurarModalSenha() {
 
   input.addEventListener("input", () => {
     erro.hidden = true;
+    input.classList.remove("modal-input-erro");
   });
 
   form.addEventListener("submit", (e) => {
@@ -164,6 +217,9 @@ function configurarModalSenha() {
     }
 
     erro.hidden = false;
+    input.classList.remove("modal-input-erro");
+    void input.offsetWidth;
+    input.classList.add("modal-input-erro");
     input.select();
   });
 }
@@ -177,15 +233,6 @@ function renderizarFeed() {
     materiaAtual === "todas"
       ? MATERIAS
       : MATERIAS.filter((m) => m.id === materiaAtual);
-
-  if (materiaAtual === "todas") {
-    tituloEl.textContent = "Todas as Matérias";
-    subtituloEl.textContent = "Registros semanais do 4º bimestre";
-  } else {
-    const atual = materiasFiltradas[0];
-    tituloEl.textContent = atual.nome;
-    subtituloEl.textContent = atual.descricao;
-  }
 
   const termo = normalizar(buscaAtual);
   const cartoes = [];
@@ -208,6 +255,19 @@ function renderizarFeed() {
       }
     });
   });
+
+  if (materiaAtual === "todas") {
+    tituloEl.textContent = "Todas as Matérias";
+    subtituloEl.textContent = termo
+      ? `${cartoes.length} ${cartoes.length === 1 ? "atividade encontrada" : "atividades encontradas"}`
+      : "Registros semanais do 4º bimestre";
+  } else {
+    const atual = materiasFiltradas[0];
+    tituloEl.textContent = atual.nome;
+    subtituloEl.textContent = termo
+      ? `${cartoes.length} ${cartoes.length === 1 ? "atividade encontrada" : "atividades encontradas"} em ${atual.nome}`
+      : atual.descricao;
+  }
 
   if (cartoes.length === 0) {
     const msg = termo
@@ -282,7 +342,23 @@ function renderizarFeed() {
     .join("");
 
   grid.querySelectorAll("[data-carta]").forEach((btn) => {
-    btn.addEventListener("click", () => abrirModalSenha(btn.dataset.carta));
+    btn.addEventListener("click", () => abrirModalSenha(btn.dataset.carta, btn));
+  });
+}
+
+function configurarBotaoTopo() {
+  const btnTopo = document.getElementById("btn-topo");
+  if (!btnTopo) return;
+
+  const atualizarVisibilidade = () => {
+    btnTopo.hidden = window.scrollY < 360;
+  };
+
+  window.addEventListener("scroll", atualizarVisibilidade, { passive: true });
+  atualizarVisibilidade();
+
+  btnTopo.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
   });
 }
 
@@ -291,10 +367,26 @@ document.addEventListener("DOMContentLoaded", () => {
   renderizarDestaques();
   renderizarFeed();
   configurarModalSenha();
+  configurarBotaoTopo();
 
   const inputBusca = document.getElementById("busca-input");
-  inputBusca.addEventListener("input", (e) => {
-    buscaAtual = e.target.value;
+  const btnLimpar = document.getElementById("busca-limpar");
+
+  const atualizarBusca = () => {
+    buscaAtual = inputBusca.value;
+    if (btnLimpar) {
+      btnLimpar.hidden = buscaAtual.length === 0;
+    }
     renderizarFeed();
-  });
+  };
+
+  inputBusca.addEventListener("input", atualizarBusca);
+
+  if (btnLimpar) {
+    btnLimpar.addEventListener("click", () => {
+      inputBusca.value = "";
+      atualizarBusca();
+      inputBusca.focus();
+    });
+  }
 });
